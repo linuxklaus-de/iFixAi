@@ -79,7 +79,7 @@ benchmark-results/
 specs/
 .specify/
 .cursor/
-.claude/
+# .claude/  ← Team-synced: plugins, skills, hooks, settings
 tasks/
 
 # ─── Local-only docs ────────────────────────────────────────────────────────

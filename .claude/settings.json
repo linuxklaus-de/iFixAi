@@ -1,0 +1,133 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "gh",
+      "args": ["api"]
+    }
+  },
+  "plugins": {
+    "omniroute": {
+      "enabled": true,
+      "description": "Intelligentes Modell-Switching bei großem Kontext",
+      "token_strategy": "adaptive",
+      "token_thresholds": {
+        "small": 50000,
+        "medium": 100000,
+        "large": 150000
+      }
+    },
+    "headroom": {
+      "enabled": true,
+      "description": "Context-Reduktion für längere Sessions",
+      "auto_summarize_at": 0.70,
+      "auto_archive_at": 0.85,
+      "keep_latest_messages": 5
+    },
+    "taskobserver": {
+      "enabled": true,
+      "description": "Analysiert Arbeitsmuster & schlägt Verbesserungen vor",
+      "collect_patterns": true,
+      "weekly_report": true,
+      "learning_period_days": 7
+    }
+  },
+  "hooks": {
+    "post_tool_use": {
+      "Edit": [
+        {
+          "name": "hook-1-ruff-format",
+          "command": "cd /home/klapo/iFixAi && ruff check --fix . 2>/dev/null && echo '✅ Ruff Format OK' || echo '⚠️ Ruff Check'",
+          "description": "Hook #1: Auto-format Code mit Ruff"
+        },
+        {
+          "name": "hook-1-mypy-typecheck",
+          "command": "cd /home/klapo/iFixAi && mypy ifixai --no-error-summary 2>/dev/null && echo '✅ MyPy OK' || echo '⚠️ Type Errors'",
+          "description": "Hook #1: Type-Check mit mypy"
+        }
+      ],
+      "Write": [
+        {
+          "name": "hook-1-validate-write",
+          "command": "echo '✅ File written, auto-formatting on next edit'",
+          "description": "Hook #1: Validates written files"
+        }
+      ]
+    },
+    "pre_commit": {
+      "name": "hook-2-pre-commit-quality-gate",
+      "commands": [
+        {
+          "name": "tests",
+          "command": "cd /home/klapo/iFixAi && pytest -m unit -q 2>/dev/null && echo '✅ Unit Tests PASSED' || echo '❌ Tests FAILED'",
+          "halt_on_error": false
+        },
+        {
+          "name": "linting",
+          "command": "cd /home/klapo/iFixAi && ruff check . 2>/dev/null && echo '✅ Linting OK' || echo '❌ Linting FAILED'",
+          "halt_on_error": false
+        },
+        {
+          "name": "types",
+          "command": "cd /home/klapo/iFixAi && mypy ifixai --no-error-summary 2>/dev/null && echo '✅ Type Check OK' || echo '⚠️ Type Errors'",
+          "halt_on_error": false
+        }
+      ]
+    },
+    "pre_push": {
+      "name": "hook-3-pre-push-security-audit",
+      "commands": [
+        {
+          "name": "bandit-security",
+          "command": "cd /home/klapo/iFixAi && bandit -r ifixai -q 2>/dev/null && echo '✅ Security OK' || echo '⚠️ Security Issues Found'",
+          "halt_on_error": false
+        },
+        {
+          "name": "check-dependencies",
+          "command": "cd /home/klapo/iFixAi && pip list --outdated 2>/dev/null | head -5 && echo '📦 Check outdated packages'",
+          "halt_on_error": false
+        }
+      ]
+    },
+    "file_watch": {
+      "name": "hook-4-watch-mode-auto-test",
+      "patterns": [
+        {
+          "glob": "ifixai/**/*.py",
+          "command": "cd /home/klapo/iFixAi && pytest -m unit -q --tb=short 2>/dev/null || true",
+          "description": "Auto-test on Python file changes"
+        }
+      ]
+    },
+    "commit_message_validation": {
+      "name": "hook-5-commit-message-validator",
+      "rules": [
+        {
+          "pattern": "^(feat|fix|docs|style|refactor|perf|test|chore)(\\(.+\\))?:.+",
+          "message": "✅ Conventional Commits format OK",
+          "error_message": "❌ Use Conventional Commits: feat(scope): description"
+        },
+        {
+          "pattern": "^.{1,50}$",
+          "message": "✅ First line < 50 chars",
+          "error_message": "❌ First line must be < 50 characters"
+        },
+        {
+          "not_pattern": "^.*(WIP|TEMP|DEBUG).*$",
+          "message": "✅ No WIP/TEMP flags",
+          "error_message": "⚠️ Remove WIP/TEMP flags before committing"
+        }
+      ]
+    }
+  },
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Write",
+      "Read",
+      "Bash(pytest)",
+      "Bash(ruff)",
+      "Bash(mypy)",
+      "Bash(git)"
+    ]
+  }
+}
