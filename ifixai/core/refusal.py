@@ -34,5 +34,5 @@ _WALL_MARKERS = (
 
 def is_platform_refusal(text: str) -> bool:
     """True when ``text`` is the Claude Code Usage-Policy wall, not a model answer."""
-    low = text.lower()
+    low = " ".join(text.lower().split())
     return any(marker in low for marker in _WALL_MARKERS)
